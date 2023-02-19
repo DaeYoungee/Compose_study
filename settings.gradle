@@ -16,3 +16,4 @@ rootProject.name = "examples"
 include ':app'
 include ':stopwatch'
 include ':webview'
+include ':mygallery'
