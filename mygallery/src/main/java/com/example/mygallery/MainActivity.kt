@@ -14,38 +14,43 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-//            SideEffect()
+            SideEffect()
+            LaunchedEffect(Unit){
+
+            }
 
         }
     }
 }
 
-//@Composable
-//fun SideEffect() {
-//    val (text, setText) = remember {
-//        mutableStateOf("initial")
-//    }
-//    Column(modifier = Modifier
-//        .fillMaxSize()
-//        .padding(16.dp)) {
-//        TextField(
-//            value = text,
-//            onValueChange = setText,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//        )
-//        Spacer(modifier = Modifier.height(20.dp))
-//        RememberUpdateTestText(text)
-//    }
-//}
-//
-//@Composable
-//fun RememberUpdateTestText(text: String) {
-//    val rememberText by remember {
-//        mutableStateOf(text)
-//    }
-//    val rememberUpdatedText by rememberUpdatedState(newValue = text)
-//    Text(text = "Text : $text")
-//    Text(text = "RememberText : $rememberText")
-//    Text(text = "UpdatedText : ${rememberUpdatedText}")
-//}
+@Composable
+fun SideEffect() {
+    val (text, setText) = remember {
+        mutableStateOf("initial")
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        TextField(
+            value = text,
+            onValueChange = setText,
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        RememberUpdateTestText(text)
+    }
+}
+
+@Composable
+fun RememberUpdateTestText(text: String) {
+    val rememberText by remember {
+        mutableStateOf(text)
+    }
+    val rememberUpdatedText by rememberUpdatedState(newValue = text)
+    Text(text = "Text : $text")
+    Text(text = "RememberText : $rememberText.value")
+    Text(text = "UpdatedText : ${rememberUpdatedText}")
+}
