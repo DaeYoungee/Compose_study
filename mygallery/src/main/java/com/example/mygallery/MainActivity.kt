@@ -7,53 +7,63 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
-import android.webkit.PermissionRequest
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
+import androidx.compose.material.Card
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.launch
-import java.util.jar.Manifest
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberImagePainter
+import com.google.accompanist.pager.*
+import kotlin.math.absoluteValue
 
 class MainActivity : ComponentActivity() {
+    @ExperimentalPagerApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val contentResolver = contentResolver
-            val (granted, setGranted) = remember {
+            val viewModel = viewModel<MainViewModel>()
+            var granted by remember {
                 mutableStateOf(false)
             }
             val launcher =
                 rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-                    setGranted(isGranted)
-                    Log.d("gandted", "$isGranted")
+                    granted = isGranted
+                    Log.d("gandted", "isGranted: $isGranted")
+                    Log.d("gandted", "gandted: $granted")
                 }
             if (ContextCompat.checkSelfPermission(
                     this,
                     android.Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                Log.d("gandted", "$granted")
-                setGranted(true)
+                Log.d("gandted", "check_gandted: $granted")
+                granted = true
             }
 
             if (granted) {
-                Text(text = "권한이 허용되었습니다.")
+                viewModel.fetchPhotos()
+                HomeScreen(photoUris = viewModel.photoUris.value)
             } else {
                 PermissionRequestScreen {
                     launcher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -80,7 +90,7 @@ fun PermissionRequestScreen(onClick: () -> Unit) {
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _photoUris = mutableStateOf(emptyList<Uri>())
-    val photoUris:State<List<Uri>> = _photoUris
+    val photoUris: State<List<Uri>> = _photoUris
     fun fetchPhotos() {
         val uris = mutableListOf<Uri>()
 
@@ -97,10 +107,64 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 val contentUri =
                     ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
-
+                Log.d("cursor", "idIndex: ${cursor.moveToNext()}, id: ${id}, contentUri: ${contentUri}")
                 uris.add(contentUri)
             }
         }
         _photoUris.value = uris
     }
 }
+
+@ExperimentalPagerApi
+@Composable
+fun HomeScreen(photoUris: List<Uri>) {
+    val pagerState = rememberPagerState()
+    Column(modifier = Modifier.fillMaxSize()) {
+        HorizontalPager(
+            state = pagerState,
+            count = photoUris.size,
+            modifier = Modifier
+                .weight(1f)
+                .padding(16.dp)
+                .fillMaxSize()
+        ) { pageIndex ->
+            Card(
+                modifier = Modifier
+                    .graphicsLayer {
+                        val pageOffset = calculateCurrentOffsetForPage(pageIndex).absoluteValue
+
+                        lerp(
+                            start = 0.85f,
+                            stop = 1f,
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f),
+                        ).also { scale ->
+                            scaleX = scale
+                            scaleY = scale
+                        }
+
+                        alpha = lerp(
+                            start = 0.5f,
+                            stop = 1f,
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f),
+                        )
+                    }
+            ) {
+                Image(
+                    painter = rememberImagePainter(data = photoUris[pageIndex]),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+        }
+        HorizontalPagerIndicator(
+            pagerState = pagerState,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(16.dp)
+        )
+    }
+}
+
+private fun lerp(start: Float, stop: Float, fraction: Float): Float =
+    (1 - fraction) * start + fraction * stop
