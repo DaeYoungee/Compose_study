@@ -11,7 +11,9 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/mygallery" />
             <option value="$PROJECT_DIR$/stopwatch" />
+            <option value="$PROJECT_DIR$/tiltsensor" />
             <option value="$PROJECT_DIR$/webview" />
           </set>
         </option>
