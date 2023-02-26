@@ -1,8 +1,6 @@
 package com.example.tiltsensor
 
 fun main() {
-    repeat(5){
-        println(it)
-    }
-    println("a".repeat(5))
+    val pair = "string1" to "string2"
+    println("${pair.first} + ${pair.second}")
 }
